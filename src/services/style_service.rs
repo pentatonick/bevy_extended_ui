@@ -2518,12 +2518,16 @@ fn propagate_recursive(
         }
 
         let has_local_family = my_active_style.map_or(false, |s| s.font_family.is_some());
-        let has_local_weight = my_active_style.map_or(false, |s| s.font_weight.is_some());
 
-        if !has_local_family && !has_local_weight {
+        // font-family inherits even when the element sets its own font-weight
+        // (CSS semantics); the local weight then picks the weighted file from
+        // the inherited family folder.
+        if !has_local_family {
             if let Some(inherited) = inherited_style {
                 if let Some(family) = &inherited.font_family {
-                    let weight = inherited.font_weight.unwrap_or(FontWeight::Normal);
+                    let weight = style_to_propagate
+                        .font_weight
+                        .unwrap_or(FontWeight::Normal);
                     let folder = &family.0;
                     let weight_str = weight_token_exact(weight);
                     let filename = format!("{}-{}.ttf", folder_basename(folder), weight_str);
